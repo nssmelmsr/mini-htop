@@ -1,40 +1,36 @@
-#include<stdio.h>
-#include<dirent.h> //directory management
-#include<unistd.h> //para funcion read()
-#include<fcntl.h> //para función open()
+#include <stdio.h>
 
-struct cpu{
-    char name[4];
-    unsigned long user,nice,system,idle,iowait,irq,softirq,steal, nice, guest_nice;
-}
-void iscpu(const char *str){    
+struct cpu {
+    char name[5];
+    unsigned long user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
+};
 
-    while (*str){
-        for (int i = 0; i < sizeof(str) ; i++ ){
-            if (str[i] == 'c' && str[i+1] == 'p' && str[i+2] == 'u'){{
-                
-            }
-        }
+int cpu_read(struct cpu *c) {
+    FILE *f = fopen("/proc/stat", "r");
+    if (!f) {
+        perror("fopen");
+        return -1;
     }
+
+    char line[256];
+
+    // leer primera línea
+    if (fgets(line, sizeof(line), f)) {
+
+        sscanf(line, "%s %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
+               c->name,
+               &c->user,
+               &c->nice,
+               &c->system,
+               &c->idle,
+               &c->iowait,
+               &c->irq,
+               &c->softirq,
+               &c->steal,
+               &c->guest,
+               &c->guest_nice);
+    }
+
+    fclose(f);
     return 0;
-}
-
-int cpu_read(void){
-    int fd;
-    char buffer[4096]; 		// maximum to read
-	ssize_t bytes_read;
-    
-    
-
-    fd = open("/proc/stat", O_RDONLY); //open file to read only
-		if (fd == -1){
-    		perror("Error openning file");    // perror shows the error code of the syscall
-    		return 1;
-    }
-    while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0){    // read whole file
-            char *ptr = buffer;
-            iscpu(*ptr);    
-        
-    }
-    close(fd); 
 }
