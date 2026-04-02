@@ -1,2 +1,7 @@
 # mini-htop
-simple implementation of htop utility
+Simple implementation of htop utility
+
+## Usage
+
+Build using the ´make´ command 
+execute using ´./htop´
