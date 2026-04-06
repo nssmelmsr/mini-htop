@@ -1,16 +1,12 @@
 CC = gcc
 CFLAGS = -Wall
 
-all: main cpuread 
+all: main 
 
 main:
 
-	$(CC) $(CFLAGS) src/main.c -o htop
-
-cpuread: 
-
-	$(CC) $(CFLAGS) src.c -o cpu
+	$(CC) $(CFLAGS) src/main.c src/cpu.c -o htop
 
 clean:
 
-	rm -f mycat myls mywc
+	rm -f htop

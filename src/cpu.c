@@ -1,11 +1,9 @@
 #include <stdio.h>
+#include "../include/cpu.h"
+#include <string.h>
 
-struct cpu {
-    char name[5];
-    unsigned long user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
-};
 
-int cpu_read(struct cpu *c) {
+int cpu_read(struct cpu *cpus, int max_cpus) {
     FILE *f = fopen("/proc/stat", "r");
     if (!f) {
         perror("fopen");
@@ -13,24 +11,31 @@ int cpu_read(struct cpu *c) {
     }
 
     char line[256];
+    int count = 0;
 
-    // leer primera línea
-    if (fgets(line, sizeof(line), f)) {
+    while (fgets(line, sizeof(line), f) && count < max_cpus) {
+        printf("\033[H\033[2J\033[3J"); //clear terminal
+
+        
+        if (strncmp(line, "cpu", 3) != 0) // lines that start with cpu only
+            break;
 
         sscanf(line, "%s %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
-               c->name,
-               &c->user,
-               &c->nice,
-               &c->system,
-               &c->idle,
-               &c->iowait,
-               &c->irq,
-               &c->softirq,
-               &c->steal,
-               &c->guest,
-               &c->guest_nice);
+               cpus[count].name,
+               &cpus[count].user,
+               &cpus[count].nice,
+               &cpus[count].system,
+               &cpus[count].idle,
+               &cpus[count].iowait,
+               &cpus[count].irq,
+               &cpus[count].softirq,
+               &cpus[count].steal,
+               &cpus[count].guest,
+               &cpus[count].guest_nice);
+
+        count++;
     }
 
     fclose(f);
-    return 0;
+    return count; // CPU Read
 }
