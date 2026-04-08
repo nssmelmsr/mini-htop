@@ -6,6 +6,8 @@ struct cpu {
     unsigned long user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
 };
 
-int cpu_read(struct cpu *cpus, int max_cpus);
+unsigned int cpu_read(struct cpu *cpus, int max_cpus);
+
+unsigned long get_total(struct cpu *c);
 
 #endif

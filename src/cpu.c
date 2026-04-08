@@ -2,8 +2,13 @@
 #include "../include/cpu.h"
 #include <string.h>
 
+unsigned long get_total(struct cpu *c) {
+    return c->user + c->nice + c->system +
+           c->idle + c->iowait + c->irq +
+           c->softirq + c->steal;
+}
 
-int cpu_read(struct cpu *cpus, int max_cpus) {
+unsigned int cpu_read(struct cpu *cpus, int max_cpus) {
     FILE *f = fopen("/proc/stat", "r");
     if (!f) {
         perror("fopen");
@@ -14,10 +19,8 @@ int cpu_read(struct cpu *cpus, int max_cpus) {
     int count = 0;
 
     while (fgets(line, sizeof(line), f) && count < max_cpus) {
-        printf("\033[H\033[2J\033[3J"); //clear terminal
-
         
-        if (strncmp(line, "cpu", 3) != 0) // lines that start with cpu only
+        if (strncmp(line, "cpu", 3) != 0) // lines that start with cpu only, 0 means its equal
             break;
 
         sscanf(line, "%s %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
