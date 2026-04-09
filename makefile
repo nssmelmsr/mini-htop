@@ -1,12 +1,14 @@
 CC = gcc
 CFLAGS = -Wall
 
-all: main 
+SRC = src/main.c src/cpu.c src/proc.c
+OBJ = $(SRC:.c=.o)
 
-main:
+htop: $(OBJ)
+	$(CC) $(CFLAGS) $(OBJ) -o minihtop
 
-	$(CC) $(CFLAGS) src/main.c src/cpu.c -o htop
+src/%.o: src/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-
-	rm -f htop
+	rm -f src/*.o minihtop
