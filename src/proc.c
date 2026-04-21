@@ -3,55 +3,110 @@
 #include <dirent.h>//dir management
 #include <unistd.h> //para funcion read()
 #include <fcntl.h> //para función open()
+#include "../include/process.h"
 
-
-int isnumber(const char *str){      //analiza nombre de archivo si sólo contiene números devuelve 1
-    for(int i=0;str[i];i++){
-        if (isdigit(str[i])){
-            return 1;
+int isnumber(const char *str){
+    if (*str == '\0') return 0;
+    for (int i = 0; str[i]; i++){
+        if (!isdigit((unsigned char)str[i])){
+            return 0;
         }
+    } 
+    return 1;
+}
+
+
+unsigned int read_process(struct process *p, int pid){
+
+    char path[256];
+    char line[1024];
+
+    snprintf(path,sizeof(path),"/proc/%d/stat",pid);
+
+    FILE *f = fopen(path,"r");
+
+    if (f == NULL){
+        return -1;
     }
+
+    if (!fgets(line,sizeof(line),f)){
+        fclose(f);
+        return -1;
+    }
+
+    fclose(f);
+
+    char *lparen = strchr(line,'(');        // encontrar nombre entre paréntesis
+    char *rparen = strrchr(line,')');
+
+    if (!lparen || !rparen){
+        return -1;
+    }
+
+    p->pid = pid;
+
+    int len = rparen - lparen - 1;      // obtener nombre
+
+    strncpy(p->name,lparen + 1,len);
+
+    p->name[len] = '\0';
+
+    char *rest = rparen + 2;    // después del ") "
+
+
+
+    sscanf(rest,        // saltar campos hasta utime y stime
+
+       "%*c " //state
+
+       "%*d %*d %*d %*d %*d "
+       "%*u %*u %*u %*u %*u "
+
+       "%lu %lu",
+
+       &p->utime,
+       &p->stime
+    );
+
+
+    p->total_time = p->utime + p->stime;
+
     return 0;
 }
 
-unsigned long get_process(void){
+unsigned long get_process(struct process *proc, int process_showing){
 
     DIR *dir = opendir("/proc");
-    ssize_t bytes_read;
-    
 
     if (dir == NULL){
-    perror("opendir");
-    return 1;
+        perror("opendir");
+        return -1;
     }
 
     struct dirent *entry;
 
-    while ((entry = readdir(dir)) != NULL){         //lee mientras hay archivos
-        if (isnumber(entry->d_name)){
-            char path[256];
-            char name[256];
-            snprintf(path, sizeof(path), "/proc/%.243s/comm",entry->d_name); //256 - 12 ("/proc//comm") -1 (bit de terminación) esto evita sobreflujo
-            int fd = open(path,O_RDONLY);
-            if (fd == -1){
-				perror("Error openning file");    // perror shows the error code of the syscall
-				continue;
-			}
-            bytes_read = read(fd, name, sizeof(name) -1);//lee el archivo
+    int count = 0;
 
-			if (bytes_read == -1){
-				perror("Error reading file");
-				close(fd);
-				return 1;
-			}
-            if (bytes_read > 0) {
-                name[bytes_read] = '\0';
-                printf("%s\t%s",entry->d_name,name);  
+
+    while ((entry = readdir(dir)) != NULL &&
+            count < process_showing){
+
+        if (isnumber(entry->d_name)){
+
+            int pid = atoi(entry->d_name);
+
+
+            if (read_process(&proc[count],pid) == 0){
+
+                count++;
+
             }
-            
-            close(fd);
+
         }
+
     }
+
     closedir(dir);
-    return 0;    
+
+    return count;
 }
